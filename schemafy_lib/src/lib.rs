@@ -133,9 +133,9 @@ fn field(s: &str) -> TokenStream {
 }
 
 fn merge_option<T, F>(mut result: &mut Option<T>, r: &Option<T>, f: F)
-where
-    F: FnOnce(&mut T, &T),
-    T: Clone,
+    where
+        F: FnOnce(&mut T, &T),
+        T: Clone,
 {
     *result = match (&mut result, r) {
         (&mut &mut Some(ref mut result), &Some(ref r)) => return f(result, r),
@@ -300,8 +300,8 @@ struct FieldType {
 }
 
 impl<S> From<S> for FieldType
-where
-    S: Into<String>,
+    where
+        S: Into<String>,
 {
     fn from(s: S) -> FieldType {
         FieldType {
@@ -374,7 +374,7 @@ impl<'r> Expander<'r> {
                 let ref_file = PathBuf::from(path_str);
                 let ref_path = self
                     .to_canonical_path(&ref_file)
-                    .expect("Could not resolve path");
+                    .expect(format!("Could not resolve path. Ref_file [{:#?}]", ref_file).as_str());
                 (
                     ref_path,
                     path_split_from_rest
@@ -468,18 +468,18 @@ impl<'r> Expander<'r> {
                 SimpleTypes::Number => "f64".into(),
                 // Handle objects defined inline
                 SimpleTypes::Object
-                    if !typ.properties.is_empty()
-                        || typ.additional_properties == Some(Value::Bool(false)) =>
-                {
-                    let name = format!(
-                        "{}{}",
-                        self.current_type.to_pascal_case(),
-                        self.current_field.to_pascal_case()
-                    );
-                    let tokens = self.expand_schema(&name, typ);
-                    self.insert_type(name.clone(), tokens);
-                    name.into()
-                }
+                if !typ.properties.is_empty()
+                    || typ.additional_properties == Some(Value::Bool(false)) =>
+                    {
+                        let name = format!(
+                            "{}{}",
+                            self.current_type.to_pascal_case(),
+                            self.current_field.to_pascal_case()
+                        );
+                        let tokens = self.expand_schema(&name, typ);
+                        self.insert_type(name.clone(), tokens);
+                        name.into()
+                    }
                 SimpleTypes::Object => {
                     let prop = match typ.additional_properties {
                         Some(ref props) if props.is_object() => {
@@ -678,7 +678,7 @@ impl<'r> Expander<'r> {
             self.resolved_schemas
                 .insert(canonical_file_path.to_owned(), Rc::clone(&loaded_schema));
             for (resolved_schema_path, resolved_schema) in
-                reffed_file_expander.resolved_schemas.into_iter()
+            reffed_file_expander.resolved_schemas.into_iter()
             {
                 self.resolved_schemas
                     .insert(resolved_schema_path, resolved_schema);
@@ -687,13 +687,16 @@ impl<'r> Expander<'r> {
         }
     }
 
-    fn to_canonical_path(&self, s: &Path) -> Option<PathBuf> {
+    fn to_canonical_path(&self, s: &Path) -> std::io::Result<PathBuf> {
         let r = if s.is_relative() {
             self.schema_directory.join(s)
         } else {
             s.to_owned()
         };
-        r.canonicalize().ok()
+        println!("Before canonicalize: [{:#?}]", r);
+        let o = r.canonicalize();
+        println!("After canonicalize: [{:#?}]", o);
+        o
     }
 
     fn type_from_json_file(p: &Path) -> &str {
@@ -704,7 +707,7 @@ impl<'r> Expander<'r> {
     }
 
     fn is_resolved_ref_path(&self, p: &Path) -> bool {
-        if let Some(canonical_path) = self.to_canonical_path(p) {
+        if let Ok(canonical_path) = self.to_canonical_path(p) {
             self.resolved_schemas.get(&canonical_path).is_some()
         } else {
             false
