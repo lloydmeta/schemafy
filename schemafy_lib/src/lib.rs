@@ -373,8 +373,9 @@ impl<'r> Expander<'r> {
                 let path_str = path_split_from_rest[0];
                 let ref_file = PathBuf::from(path_str);
                 let ref_path = self
-                    .to_canonical_path(&ref_file)
-                    .expect(format!("Could not resolve path. Ref_file [{:#?}]", ref_file).as_str());
+                    .to_canonical_path(&ref_file).unwrap_or_else(|err| {
+                    panic!("Could not resolve path. Ref_file [{:#?}] error: [{}]", ref_file, err);
+                });
                 (
                     ref_path,
                     path_split_from_rest
@@ -651,6 +652,16 @@ impl<'r> Expander<'r> {
             let loaded_schema: Rc<Schema> =
                 Rc::new(serde_json::from_str(&json).expect("JSON parse error"));
             let type_name_from_file = Some(Self::type_from_json_file(canonical_file_path));
+
+            println!("canonical_file_path [{:#?}", canonical_file_path);
+            let parent = canonical_file_path
+                .parent()
+                .expect(&format!(
+                    "Could not detect directory of file: {:#?}",
+                    canonical_file_path.as_os_str()
+                ))
+                .to_owned();
+            println!("canonical_file_path parent [{:#?}", parent);
             let mut reffed_file_expander = Expander {
                 root_name: type_name_from_file,
                 schemafy_path: self.schemafy_path,
@@ -658,13 +669,7 @@ impl<'r> Expander<'r> {
                 current_field: "".into(),
                 current_type: "".into(),
                 types: self.types.clone(),
-                schema_directory: canonical_file_path
-                    .parent()
-                    .expect(&format!(
-                        "Could not detect directory of file: {:#?}",
-                        canonical_file_path.as_os_str()
-                    ))
-                    .to_owned(),
+                schema_directory: parent,
                 resolved_schemas: self.resolved_schemas.clone(),
                 type_replacer: self.type_replacer,
             };
