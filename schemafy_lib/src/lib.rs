@@ -133,9 +133,9 @@ fn field(s: &str) -> TokenStream {
 }
 
 fn merge_option<T, F>(mut result: &mut Option<T>, r: &Option<T>, f: F)
-where
-    F: FnOnce(&mut T, &T),
-    T: Clone,
+    where
+        F: FnOnce(&mut T, &T),
+        T: Clone,
 {
     *result = match (&mut result, r) {
         (&mut &mut Some(ref mut result), &Some(ref r)) => return f(result, r),
@@ -300,8 +300,8 @@ struct FieldType {
 }
 
 impl<S> From<S> for FieldType
-where
-    S: Into<String>,
+    where
+        S: Into<String>,
 {
     fn from(s: S) -> FieldType {
         FieldType {
@@ -471,18 +471,18 @@ impl<'r> Expander<'r> {
                 SimpleTypes::Number => "f64".into(),
                 // Handle objects defined inline
                 SimpleTypes::Object
-                    if !typ.properties.is_empty()
-                        || typ.additional_properties == Some(Value::Bool(false)) =>
-                {
-                    let name = format!(
-                        "{}{}",
-                        self.current_type.to_pascal_case(),
-                        self.current_field.to_pascal_case()
-                    );
-                    let tokens = self.expand_schema(&name, typ);
-                    self.insert_type(name.clone(), tokens);
-                    name.into()
-                }
+                if !typ.properties.is_empty()
+                    || typ.additional_properties == Some(Value::Bool(false)) =>
+                    {
+                        let name = format!(
+                            "{}{}",
+                            self.current_type.to_pascal_case(),
+                            self.current_field.to_pascal_case()
+                        );
+                        let tokens = self.expand_schema(&name, typ);
+                        self.insert_type(name.clone(), tokens);
+                        name.into()
+                    }
                 SimpleTypes::Object => {
                     let prop = match typ.additional_properties {
                         Some(ref props) if props.is_object() => {
@@ -685,11 +685,13 @@ impl<'r> Expander<'r> {
             self.resolved_schemas
                 .insert(canonical_file_path.to_owned(), Rc::clone(&loaded_schema));
             for (resolved_schema_path, resolved_schema) in
-                reffed_file_expander.resolved_schemas.into_iter()
+            reffed_file_expander.resolved_schemas.into_iter()
             {
                 self.resolved_schemas
                     .insert(resolved_schema_path, resolved_schema);
             }
+            let current = self.schema_directory.clone();
+            println!("finished loading referenced schema [{:#?}], now back at [{:#?}]", canonical_file_path, current);
             loaded_schema
         }
     }
