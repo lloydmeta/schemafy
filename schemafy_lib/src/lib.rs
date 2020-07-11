@@ -359,7 +359,7 @@ impl<'r> Expander<'r> {
                     .iter()
                     .skip(1)
                     .for_each(|def| {
-                        merge_all_of(&mut use_for_merge, &self.schema(Rc::clone(def)));
+                        merge_all_of(&mut use_for_merge, def);
                     });
                 Rc::new(use_for_merge)
             }
