@@ -353,17 +353,16 @@ impl<'r> Expander<'r> {
             None => schema,
         };
         match schema.all_of {
-            // Some(ref all_of) if !all_of.is_empty() => {
-            //     all_of
-            //         .iter()
-            //         .skip(1)
-            //         .fold(self.schema(Rc::clone(&all_of[0])), |result, def| {
-            //             println!("Inside all of merge fold thing");
-            //             let mut use_for_merge = (*result).clone();
-            //             merge_all_of(&mut use_for_merge, &self.schema(Rc::clone(def)));
-            //             Rc::new(use_for_merge)
-            //         })
-            // }
+            Some(ref all_of) if !all_of.is_empty() => {
+                let mut use_for_merge = (*all_of[0]).clone();
+                all_of
+                    .iter()
+                    .skip(1)
+                    .for_each(|def| {
+                        merge_all_of(&mut use_for_merge, &self.schema(Rc::clone(def)));
+                    });
+                Rc::new(use_for_merge)
+            }
             _ => schema,
         }
     }
