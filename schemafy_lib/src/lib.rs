@@ -145,6 +145,7 @@ fn merge_option<T, F>(mut result: &mut Option<T>, r: &Option<T>, f: F)
 }
 
 fn merge_all_of(result: &mut Schema, r: &Schema) {
+    println!("inside merge_all_of, merging result schema id [{:#?}] with r id [{:#?}]", result.id, r.id);
     use std::collections::btree_map::Entry;
 
     for (k, v) in &r.properties {
@@ -346,6 +347,7 @@ impl<'r> Expander<'r> {
     }
 
     fn schema(&mut self, schema: Rc<Schema>) -> Rc<Schema> {
+        println!("Inside .schema, for id [{:#?}]", schema.id);
         let schema = match schema.ref_ {
             Some(ref ref_) => self.schema_ref(ref_),
             None => schema,
@@ -356,6 +358,7 @@ impl<'r> Expander<'r> {
                     .iter()
                     .skip(1)
                     .fold(self.schema(Rc::clone(&all_of[0])), |result, def| {
+                        println!("Inside all of merge fold thing");
                         let mut use_for_merge = (*result).clone();
                         merge_all_of(&mut use_for_merge, &self.schema(Rc::clone(def)));
                         Rc::new(use_for_merge)
