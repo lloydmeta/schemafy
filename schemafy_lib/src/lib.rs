@@ -145,7 +145,7 @@ fn merge_option<T, F>(mut result: &mut Option<T>, r: &Option<T>, f: F)
 }
 
 fn merge_all_of(result: &mut Schema, r: &Schema) {
-    println!("inside merge_all_of, merging result schema id [{:#?}] with r id [{:#?}]", result.id, r.id);
+    println!("inside merge_all_of, merging result schema {:#?}] with r [{:#?}]", result, r);
     use std::collections::btree_map::Entry;
 
     for (k, v) in &r.properties {
