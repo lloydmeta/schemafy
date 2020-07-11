@@ -223,8 +223,9 @@ struct FieldExpander<'a, 'r: 'a> {
 
 impl<'a, 'r> FieldExpander<'a, 'r> {
     fn expand_fields(&mut self, type_name: &str, schema: Rc<Schema>) -> Vec<TokenStream> {
+        println!("expanding fields for type_name [{}]", type_name);
         let schema = self.expander.schema(schema);
-        schema
+        let r = schema
             .properties
             .iter()
             .map(|(field_name, value)| {
@@ -278,7 +279,9 @@ impl<'a, 'r> FieldExpander<'a, 'r> {
                     #key : #typ
                 }
             })
-            .collect()
+            .collect();
+        println!("done expanding fields for type_name [{}]", type_name);
+        r
     }
 }
 
@@ -348,6 +351,7 @@ impl<'r> Expander<'r> {
 
     fn schema(&mut self, schema: Rc<Schema>) -> Rc<Schema> {
         println!("Inside .schema, for id [{:#?}] title [{:#?}]", schema.id, schema.title);
+        println!("Inside .schema, schema [{:#?}", schema);
         let schema = match schema.ref_ {
             Some(ref ref_) => self.schema_ref(ref_),
             None => schema,
