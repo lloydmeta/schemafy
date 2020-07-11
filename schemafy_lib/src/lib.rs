@@ -702,7 +702,7 @@ impl<'r> Expander<'r> {
             }
             let current = self.schema_directory.clone();
             println!("finished loading referenced schema [{:#?}], now back at [{:#?}]", canonical_file_path, current);
-            println!("self.root_name [{}], self.schema_dir [{:#?}],", self.root_name, self.schema_directory);
+            println!("self.root_name [{:#?}], self.schema_dir [{:#?}],", self.root_name, self.schema_directory);
             loaded_schema
         }
     }
