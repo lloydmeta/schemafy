@@ -148,7 +148,9 @@ fn merge_all_of(result: &mut Schema, r: &Schema) {
     println!("inside merge_all_of, merging result schema {:#?}] with r [{:#?}]", result, r);
     use std::collections::btree_map::Entry;
 
+    println!("About to merge properties");
     for (k, v) in &r.properties {
+        println!("merging property k [{}]", k);
         match result.properties.entry(k.clone()) {
             Entry::Vacant(entry) => {
                 entry.insert(Rc::clone(v));
@@ -359,10 +361,12 @@ impl<'r> Expander<'r> {
         match schema.all_of {
             Some(ref all_of) if !all_of.is_empty() => {
                 let mut use_for_merge = (*all_of[0]).clone();
+                println!("inside .schema, about use_for_merge [{:#?}]", use_for_merge);
                 all_of
                     .iter()
                     .skip(1)
                     .for_each(|def| {
+
                         merge_all_of(&mut use_for_merge, def);
                     });
                 Rc::new(use_for_merge)
