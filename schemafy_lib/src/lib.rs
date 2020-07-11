@@ -412,6 +412,7 @@ impl<'r> Expander<'r> {
     }
 
     fn expand_type(&mut self, type_name: &str, required: bool, typ: Rc<Schema>) -> FieldType {
+        println!("Expanding type type_name:[{}]", type_name);
         let mut result = self.expand_type_(typ);
         if type_name == result.typ {
             result.typ = format!("Box<{}>", result.typ)
@@ -423,6 +424,7 @@ impl<'r> Expander<'r> {
     }
 
     fn expand_type_(&mut self, typ: Rc<Schema>) -> FieldType {
+        println!("in expand_type_");
         let mut r = if let Some(ref ref_) = typ.ref_ {
             self.type_ref(ref_).into()
         } else if typ.any_of.as_ref().map_or(false, |a| a.len() == 2) {
@@ -541,6 +543,7 @@ impl<'r> Expander<'r> {
     }
 
     fn expand_schema(&mut self, original_name: &str, schema: Rc<Schema>) -> TokenStream {
+        println!("Inside expand_schema, original_name [{}]", original_name);
         println!("Expanding definitions, original_name [{}]", original_name);
         self.expand_definitions(Rc::clone(&schema));
         println!("Done expanding definitions, original_name [{}]", original_name);
