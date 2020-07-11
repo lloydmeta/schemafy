@@ -366,6 +366,7 @@ impl<'r> Expander<'r> {
     }
 
     fn schema_ref(&mut self, s: &str) -> Rc<Schema> {
+        println!("inside schema_ref s:[{}]", s);
         let (schema, ref_lookup) = if s.contains(".json") {
             // Format referenced.json#/definitions/ExternalType
             let path_split_from_rest: Vec<&str> = s.split('#').collect::<Vec<&str>>();
@@ -394,6 +395,7 @@ impl<'r> Expander<'r> {
         } else {
             (Rc::clone(&self.root), s)
         };
+        println!("inside schema_ref ref_lookup:[{}]", ref_lookup);
 
         ref_lookup.split('/').fold(schema, |schema, comp: &str| {
             if comp == "#" {
@@ -651,6 +653,7 @@ impl<'r> Expander<'r> {
     }
 
     fn expand_file_schema_ref(&mut self, canonical_file_path: &Path) -> Rc<Schema> {
+        println!("inside expand_file_schema_ref");
         if let Some(existing) = self.resolved_schemas.get(canonical_file_path) {
             return Rc::clone(existing);
         } else {
@@ -699,6 +702,7 @@ impl<'r> Expander<'r> {
             }
             let current = self.schema_directory.clone();
             println!("finished loading referenced schema [{:#?}], now back at [{:#?}]", canonical_file_path, current);
+            println!("self.root_name [{}], self.schema_dir [{:#?}],", self.root_name, self.schema_directory);
             loaded_schema
         }
     }
