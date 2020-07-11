@@ -354,20 +354,26 @@ impl<'r> Expander<'r> {
     fn schema(&mut self, schema: Rc<Schema>) -> Rc<Schema> {
         println!("Inside .schema, for id [{:#?}] title [{:#?}]", schema.id, schema.title);
         println!("Inside .schema, schema [{:#?}", schema);
+        // TODO I think this is problematic because we might expand the definition
         let schema = match schema.ref_ {
             Some(ref ref_) => self.schema_ref(ref_),
             None => schema,
         };
+
+        println!("Inside .schema, for id [{:#?}] title [{:#?}]", schema.id, schema.title);
         match schema.all_of {
             Some(ref all_of) if !all_of.is_empty() => {
-                let mut use_for_merge = (*all_of[0]).clone();
+                let cloned_first = (*all_of[0]).clone();
+                let _use_for_merge = self.schema(Rc::new(cloned_first));
+                let mut use_for_merge = (*_use_for_merge).clone();
                 println!("inside .schema, about use_for_merge [{:#?}]", use_for_merge);
                 all_of
                     .iter()
                     .skip(1)
                     .for_each(|def| {
-
-                        merge_all_of(&mut use_for_merge, def);
+                        let next_all_of = def.clone();
+                        let resolved_next = self.schema(next_all_of);
+                        merge_all_of(&mut use_for_merge, &resolved_next);
                     });
                 Rc::new(use_for_merge)
             }
