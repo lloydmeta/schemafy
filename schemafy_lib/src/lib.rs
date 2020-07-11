@@ -543,7 +543,7 @@ impl<'r> Expander<'r> {
     fn expand_schema(&mut self, original_name: &str, schema: Rc<Schema>) -> TokenStream {
         println!("Expanding definitions, original_name [{}]", original_name);
         self.expand_definitions(Rc::clone(&schema));
-        println("Done expanding definitions, original_name [{}]", original_name);
+        println!("Done expanding definitions, original_name [{}]", original_name);
 
         let pascal_case_name = replace_invalid_identifier_chars(&original_name.to_pascal_case());
         self.current_type.clone_from(&pascal_case_name);
