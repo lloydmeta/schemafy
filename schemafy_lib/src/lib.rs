@@ -647,14 +647,16 @@ impl<'r> Expander<'r> {
             };
         };
 
-        if name == original_name {
+        let r = if name == original_name {
             type_decl
         } else {
             quote! {
                 #[serde(rename = #original_name)]
                 #type_decl
             }
-        }
+        };
+        println!("done expand_schema [{}]", original_name);
+        r
     }
 
     fn expand_file_schema_ref(&mut self, canonical_file_path: &Path) -> Rc<Schema> {
