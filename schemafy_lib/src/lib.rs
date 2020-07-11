@@ -347,7 +347,7 @@ impl<'r> Expander<'r> {
     }
 
     fn schema(&mut self, schema: Rc<Schema>) -> Rc<Schema> {
-        println!("Inside .schema, for id [{:#?}]", schema.id);
+        println!("Inside .schema, for id [{:#?}] title [{:#?}]", schema.id, schema.title);
         let schema = match schema.ref_ {
             Some(ref ref_) => self.schema_ref(ref_),
             None => schema,
@@ -529,7 +529,7 @@ impl<'r> Expander<'r> {
     }
 
     fn expand_definitions(&mut self, schema: Rc<Schema>) {
-        println!("inside expand_definitions, schema id [{:#?}]", schema.id);
+        println!("inside expand_definitions, schema id [{:#?}] title[{:#?}]", schema.id, schema.title);
         for (name, def) in &schema.definitions {
             println!("Expanding definition of [{}]", name);
             let type_decl = self.expand_schema(name, Rc::clone(def));
@@ -546,7 +546,7 @@ impl<'r> Expander<'r> {
             self.insert_type(name.clone(), definition_tokens);
             println!("Finished expanding definition of [{}]", name);
         }
-        println!("finished expand_definitions, schema id [{:#?}]", schema.id);
+        println!("finished expand_definitions, schema id [{:#?}] title[{:#?}]", schema.id, schema.title);
     }
 
     fn expand_schema(&mut self, original_name: &str, schema: Rc<Schema>) -> TokenStream {
