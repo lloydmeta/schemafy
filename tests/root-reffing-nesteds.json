@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "root-reffing-nested",
+  "type": "object",
+  "definitions": {
+    "nested-reffing-with-all-of-type1": {
+      "$ref": "ref/nested-reffing-with-all-of-type.json"
+    },
+    "nested-reffing-with-all-of-type2": {
+      "$ref": "ref/nested-reffing-with-all-of-type.json"
+    }
+  }
+}

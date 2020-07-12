@@ -172,10 +172,12 @@ impl<'a> GenerateBuilder<'a> {
 /// ```
 #[proc_macro]
 pub fn schemafy(tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    GenerateBuilder {
+    let t = GenerateBuilder {
         ..GenerateBuilder::default()
     }
-    .build_tokens(tokens)
+    .build_tokens(tokens);
+    println!("{}", t);
+    t
 }
 
 #[doc(hidden)]

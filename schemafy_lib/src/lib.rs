@@ -133,9 +133,9 @@ fn field(s: &str) -> TokenStream {
 }
 
 fn merge_option<T, F>(mut result: &mut Option<T>, r: &Option<T>, f: F)
-where
-    F: FnOnce(&mut T, &T),
-    T: Clone,
+    where
+        F: FnOnce(&mut T, &T),
+        T: Clone,
 {
     *result = match (&mut result, r) {
         (&mut &mut Some(ref mut result), &Some(ref r)) => return f(result, r),
@@ -300,8 +300,8 @@ struct FieldType {
 }
 
 impl<S> From<S> for FieldType
-where
-    S: Into<String>,
+    where
+        S: Into<String>,
 {
     fn from(s: S) -> FieldType {
         FieldType {
@@ -356,7 +356,8 @@ impl<'r> Expander<'r> {
                     .iter()
                     .skip(1)
                     .fold(self.schema(Rc::clone(&all_of[0])), |result, def| {
-                        let mut use_for_merge = (*result).clone();
+                        let resolved_schema = self.schema(result);
+                        let mut use_for_merge = (*resolved_schema).clone();
                         merge_all_of(&mut use_for_merge, &self.schema(Rc::clone(def)));
                         Rc::new(use_for_merge)
                     })
@@ -374,7 +375,7 @@ impl<'r> Expander<'r> {
                 let ref_file = PathBuf::from(path_str);
                 let ref_path = self
                     .to_canonical_path(&ref_file)
-                    .expect("Could not resolve path");
+                    .expect(format!("Could not resolve path [{:#?}] current_ dir [{:#?}]", ref_file, self.schema_directory).as_str());
                 (
                     ref_path,
                     path_split_from_rest
@@ -468,18 +469,18 @@ impl<'r> Expander<'r> {
                 SimpleTypes::Number => "f64".into(),
                 // Handle objects defined inline
                 SimpleTypes::Object
-                    if !typ.properties.is_empty()
-                        || typ.additional_properties == Some(Value::Bool(false)) =>
-                {
-                    let name = format!(
-                        "{}{}",
-                        self.current_type.to_pascal_case(),
-                        self.current_field.to_pascal_case()
-                    );
-                    let tokens = self.expand_schema(&name, typ);
-                    self.insert_type(name.clone(), tokens);
-                    name.into()
-                }
+                if !typ.properties.is_empty()
+                    || typ.additional_properties == Some(Value::Bool(false)) =>
+                    {
+                        let name = format!(
+                            "{}{}",
+                            self.current_type.to_pascal_case(),
+                            self.current_field.to_pascal_case()
+                        );
+                        let tokens = self.expand_schema(&name, typ);
+                        self.insert_type(name.clone(), tokens);
+                        name.into()
+                    }
                 SimpleTypes::Object => {
                     let prop = match typ.additional_properties {
                         Some(ref props) if props.is_object() => {
@@ -641,7 +642,8 @@ impl<'r> Expander<'r> {
     }
 
     fn expand_file_schema_ref(&mut self, canonical_file_path: &Path) -> Rc<Schema> {
-        if let Some(existing) = self.resolved_schemas.get(canonical_file_path) {
+        println!("Expanding file_schema_ref {:#?}", canonical_file_path);
+        let r = if let Some(existing) = self.resolved_schemas.get(canonical_file_path) {
             return Rc::clone(existing);
         } else {
             // Resolve the referenced file Schema.
@@ -678,13 +680,15 @@ impl<'r> Expander<'r> {
             self.resolved_schemas
                 .insert(canonical_file_path.to_owned(), Rc::clone(&loaded_schema));
             for (resolved_schema_path, resolved_schema) in
-                reffed_file_expander.resolved_schemas.into_iter()
+            reffed_file_expander.resolved_schemas.into_iter()
             {
                 self.resolved_schemas
                     .insert(resolved_schema_path, resolved_schema);
             }
             loaded_schema
-        }
+        };
+        println!("Done expanding file_schema_ref {:#?}", canonical_file_path);
+        r
     }
 
     fn to_canonical_path(&self, s: &Path) -> Option<PathBuf> {

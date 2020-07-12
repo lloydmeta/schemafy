@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "nested-reffing-with-all-of-type",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "../reffed-from-nested-with-all-of-type.json"
+    },
+    {
+      "properties": {
+        "foo-bar-prop": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "foo-bar-prop"
+      ]
+    }
+  ]
+}

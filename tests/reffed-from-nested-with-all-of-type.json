@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "nested-reffed-as-all-of-type",
+  "type": "object",
+  "required": [
+    "foo-bar-bar-prop"
+  ],
+  "properties": {
+    "foo-bar-bar-prop": {
+      "type": "string"
+    }
+  }
+}
