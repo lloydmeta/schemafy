@@ -133,9 +133,9 @@ fn field(s: &str) -> TokenStream {
 }
 
 fn merge_option<T, F>(mut result: &mut Option<T>, r: &Option<T>, f: F)
-    where
-        F: FnOnce(&mut T, &T),
-        T: Clone,
+where
+    F: FnOnce(&mut T, &T),
+    T: Clone,
 {
     *result = match (&mut result, r) {
         (&mut &mut Some(ref mut result), &Some(ref r)) => return f(result, r),
@@ -226,29 +226,36 @@ impl<'a, 'r> FieldExpander<'a, 'r> {
         type_name: &str,
         schema: Rc<Schema>,
     ) -> (Rc<Schema>, Vec<TokenStream>) {
-        let schema = self.expander.schema(schema);
+        let schema_rc = self.expander.schema(schema);
+        let mut schema = (*schema_rc).clone();
         let tokens = schema
             .properties
-            .iter()
+            .iter_mut()
             .map(|(field_name, value)| {
                 self.expander.current_field.clone_from(field_name);
                 let key = field(field_name);
-                let required = schema
+                let required = schema_rc
                     .required
                     .iter()
                     .flat_map(|a| a.iter())
                     .any(|req| req == field_name);
                 // if the schema of the field is a reference, then expand it and add it to the
                 // current Schema's types
+                let mut maybe_expanded: Option<Rc<Schema>> = None;
                 if let Some(_) = value.ref_ {
-                    self.expander.schema(Rc::clone(value));
+                    maybe_expanded = Some(self.expander.schema(Rc::clone(value)));
                 }
                 value.items.iter().for_each(|i| {
                     self.expander.schema(Rc::clone(i));
                 });
+
                 let field_type = self
                     .expander
                     .expand_type(type_name, required, Rc::clone(value));
+                if let Some(expanded) = maybe_expanded {
+                    *value = expanded;
+                }
+
                 if !field_type.typ.starts_with("Option<") {
                     self.default = false;
                 }
@@ -282,7 +289,7 @@ impl<'a, 'r> FieldExpander<'a, 'r> {
                 }
             })
             .collect();
-        (schema, tokens)
+        (Rc::new(schema), tokens)
     }
 }
 
@@ -305,8 +312,8 @@ struct FieldType {
 }
 
 impl<S> From<S> for FieldType
-    where
-        S: Into<String>,
+where
+    S: Into<String>,
 {
     fn from(s: S) -> FieldType {
         FieldType {
@@ -388,7 +395,7 @@ impl<'r> Expander<'r> {
                         "Could not resolve path [{:#?}] current_ dir [{:#?}]",
                         ref_file, self.schema_directory
                     )
-                        .as_str(),
+                    .as_str(),
                 );
                 (
                     ref_path,
@@ -483,18 +490,18 @@ impl<'r> Expander<'r> {
                 SimpleTypes::Number => "f64".into(),
                 // Handle objects defined inline
                 SimpleTypes::Object
-                if !typ.properties.is_empty()
-                    || typ.additional_properties == Some(Value::Bool(false)) =>
-                    {
-                        let name = format!(
-                            "{}{}",
-                            self.current_type.to_pascal_case(),
-                            self.current_field.to_pascal_case()
-                        );
-                        let (_, tokens) = self.expand_schema(&name, typ);
-                        self.insert_type(name.clone(), tokens);
-                        name.into()
-                    }
+                    if !typ.properties.is_empty()
+                        || typ.additional_properties == Some(Value::Bool(false)) =>
+                {
+                    let name = format!(
+                        "{}{}",
+                        self.current_type.to_pascal_case(),
+                        self.current_field.to_pascal_case()
+                    );
+                    let (_, tokens) = self.expand_schema(&name, typ);
+                    self.insert_type(name.clone(), tokens);
+                    name.into()
+                }
                 SimpleTypes::Object => {
                     let prop = match typ.additional_properties {
                         Some(ref props) if props.is_object() => {
@@ -702,7 +709,7 @@ impl<'r> Expander<'r> {
                 }
             }
             for (resolved_schema_path, resolved_schema) in
-            reffed_file_expander.resolved_schemas.into_iter()
+                reffed_file_expander.resolved_schemas.into_iter()
             {
                 self.resolved_schemas
                     .insert(resolved_schema_path, resolved_schema);
