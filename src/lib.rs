@@ -143,7 +143,7 @@ impl<'a> GenerateBuilder<'a> {
             input_dir,
             &self.type_replacer,
         );
-        expander.expand(schema).into()
+        expander.expand(schema).1.into()
     }
 }
 
