@@ -707,9 +707,7 @@ impl<'r> Expander<'r> {
                 self.resolved_schemas
                     .insert(resolved_schema_path, resolved_schema);
             }
-            // We need to replace loaded_schema with the full resolved schema here so that it has no
-            // refs
-            if !self.resolved_schemas.contains_key(canonical_file_path) {
+            {
                 self.resolved_schemas
                     .insert(canonical_file_path.to_owned(), Rc::clone(&expanded_schema));
             }
