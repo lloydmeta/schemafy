@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "reffed-from-nested-with-all-of-properties-named-type",
+  "type": "object",
+  "required": [
+    "foo-bar-bar-bar-prop"
+  ],
+  "properties": {
+    "foo-bar-bar-bar-prop": {
+      "type": "boolean"
+    }
+  }
+}

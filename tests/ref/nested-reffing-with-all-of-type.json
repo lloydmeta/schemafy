@@ -10,10 +10,14 @@
       "properties": {
         "foo-bar-prop": {
           "type": "string"
+        },
+        "reffed-prop-in-all-of": {
+          "$ref": "../reffed-from-nested-with-all-of-properties-named.json"
         }
       },
       "required": [
-        "foo-bar-prop"
+        "foo-bar-prop",
+        "reffed-prop-in-all-of"
       ]
     }
   ]
