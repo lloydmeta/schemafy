@@ -133,9 +133,9 @@ fn field(s: &str) -> TokenStream {
 }
 
 fn merge_option<T, F>(mut result: &mut Option<T>, r: &Option<T>, f: F)
-    where
-        F: FnOnce(&mut T, &T),
-        T: Clone,
+where
+    F: FnOnce(&mut T, &T),
+    T: Clone,
 {
     *result = match (&mut result, r) {
         (&mut &mut Some(ref mut result), &Some(ref r)) => return f(result, r),
@@ -221,10 +221,12 @@ struct FieldExpander<'a, 'r: 'a> {
 }
 
 impl<'a, 'r> FieldExpander<'a, 'r> {
-    fn expand_fields(&mut self, type_name: &str, schema: Rc<Schema>) -> (Rc<Schema>, Vec<TokenStream>) {
-        println!("Inside expand_fields before expanding schema current_directory:[{:#?}] schema:[{:#?}]", self.expander.schema_directory, schema);
+    fn expand_fields(
+        &mut self,
+        type_name: &str,
+        schema: Rc<Schema>,
+    ) -> (Rc<Schema>, Vec<TokenStream>) {
         let schema = self.expander.schema(schema);
-        println!("Inside expand_fields after expanding schema current_directory:[{:#?}] schema:[{:#?}]", self.expander.schema_directory, schema);
         let tokens = schema
             .properties
             .iter()
@@ -303,8 +305,8 @@ struct FieldType {
 }
 
 impl<S> From<S> for FieldType
-    where
-        S: Into<String>,
+where
+    S: Into<String>,
 {
     fn from(s: S) -> FieldType {
         FieldType {
@@ -348,172 +350,26 @@ impl<'r> Expander<'r> {
         replace_invalid_identifier_chars(&s.to_pascal_case())
     }
 
+    // Takes a schema and returns a possibly fully-expanded, denormalised (no ref) form of it
     fn schema(&mut self, schema: Rc<Schema>) -> Rc<Schema> {
-        // TODO when expanding something, we get this:
-        /*
-         About to expand schema_ref for current dir:["/Users/lloyd/Documents/rustt/schemafy/tests"] root_name:[Some(
-            "Root",
-        )], schema._ref:[Some(
-            "ref/nested-reffing-with-all-of-type.json",
-        )]
-         */
-
-        // TODO AT which point schema is resolved but is possibly in a nested dir...
-        // TODO: we need to run the merge from the perspective of the root of the nested directory!!!!
-        //      THIS
-        // OTHER WISE
-
-        /*
-        About to merge all_of for current dir:["/Users/lloyd/Documents/rustt/schemafy/tests"] root_name:[Some(
-    "Root",
-)], schema all_of:[Some(
-    [
-        Schema {
-            ref_: Some(
-                "../reffed-from-nested-with-all-of-type.json",
-            ),
-            schema: None,
-            additional_items: None,
-            additional_properties: None,
-            all_of: None,
-            any_of: None,
-            default: None,
-            definitions: {},
-            dependencies: None,
-            description: None,
-            enum_: None,
-            exclusive_maximum: None,
-            exclusive_minimum: None,
-            id: None,
-            items: [],
-            max_items: None,
-            max_length: None,
-            max_properties: None,
-            maximum: None,
-            min_items: None,
-            min_length: None,
-            min_properties: None,
-            minimum: None,
-            multiple_of: None,
-            not: None,
-            one_of: None,
-            pattern: None,
-            pattern_properties: {},
-            properties: {},
-            required: None,
-            title: None,
-            type_: [],
-            unique_items: None,
-        },
-        Schema {
-            ref_: None,
-            schema: None,
-            additional_items: None,
-            additional_properties: None,
-            all_of: None,
-            any_of: None,
-            default: None,
-            definitions: {},
-            dependencies: None,
-            description: None,
-            enum_: None,
-            exclusive_maximum: None,
-            exclusive_minimum: None,
-            id: None,
-            items: [],
-            max_items: None,
-            max_length: None,
-            max_properties: None,
-            maximum: None,
-            min_items: None,
-            min_length: None,
-            min_properties: None,
-            minimum: None,
-            multiple_of: None,
-            not: None,
-            one_of: None,
-            pattern: None,
-            pattern_properties: {},
-            properties: {
-                "foo-bar-prop": Schema {
-                    ref_: None,
-                    schema: None,
-                    additional_items: None,
-                    additional_properties: None,
-                    all_of: None,
-                    any_of: None,
-                    default: None,
-                    definitions: {},
-                    dependencies: None,
-                    description: None,
-                    enum_: None,
-                    exclusive_maximum: None,
-                    exclusive_minimum: None,
-                    id: None,
-                    items: [],
-                    max_items: None,
-                    max_length: None,
-                    max_properties: None,
-                    maximum: None,
-                    min_items: None,
-                    min_length: None,
-                    min_properties: None,
-                    minimum: None,
-                    multiple_of: None,
-                    not: None,
-                    one_of: None,
-                    pattern: None,
-                    pattern_properties: {},
-                    properties: {},
-                    required: None,
-                    title: None,
-                    type_: [
-                        String,
-                    ],
-                    unique_items: None,
-                },
-            },
-            required: Some(
-                [
-                    "foo-bar-prop",
-                ],
-            ),
-            title: None,
-            type_: [],
-            unique_items: None,
-        },
-    ],
-)]
-         */
-
-
-        println!("About to expand schema_ref for current dir:[{:#?}] root_name:[{:#?}], schema._ref:[{:#?}]", self.schema_directory, self.root_name, &schema.ref_);
         let schema = match schema.ref_ {
             Some(ref ref_) => self.schema_ref(ref_),
             None => schema,
         };
-        // TODO Fix this part. After expanding an all_of, we need to replace the reffed definitions?
-        // with the expanded definition...
-
-        println!("About to merge all_of for current dir:[{:#?}] root_name:[{:#?}], schema all_of:[{:#?}]", self.schema_directory, self.root_name, schema.all_of);
         match schema.all_of {
             Some(ref all_of) if !all_of.is_empty() => {
-                println!("About to resolve first schema in all_of current dir:[{:#?}] schema:[{:#?}]", self.schema_directory, &all_of[0]);
                 let first_rc_schema = Rc::clone(&all_of[0]);
                 // one for the file
                 let first_rc_resolved = self.schema(first_rc_schema);
-                println!("Done resolving first schema in all_of [{:#?}]", first_rc_resolved);
-                let mut result = all_of
-                    .iter()
-                    .skip(1)
-                    .fold((*first_rc_resolved).clone(), |mut result, def| {
-                        println!("Inside .schema all_of merge, about to resolve schema for current dir:[{:#?}] schema:[{:#?}]", self.schema_directory, def);
-                        let resolved_schema = self.schema(Rc::clone(def));
-                        println!("Inside .schema all_of merge, finished resolving current dir:[{:#?}] schema:[{:#?}]", self.schema_directory, resolved_schema);
-                        merge_all_of(&mut result, &resolved_schema);
-                        result
-                    });
-                println!("Merged all_of current dir [{:#?}] result:[{:#?}]", self.schema_directory, result);
+                let result =
+                    all_of
+                        .iter()
+                        .skip(1)
+                        .fold((*first_rc_resolved).clone(), |mut result, def| {
+                            let resolved_schema = self.schema(Rc::clone(def));
+                            merge_all_of(&mut result, &resolved_schema);
+                            result
+                        });
                 Rc::new(result)
             }
             _ => schema,
@@ -521,17 +377,19 @@ impl<'r> Expander<'r> {
     }
 
     fn schema_ref(&mut self, s: &str) -> Rc<Schema> {
-        println!("Just inside schema_ref resolution for s:[{}], current dir :[{:#?}]", s, self.schema_directory);
         let (schema, ref_lookup) = if s.contains(".json") {
-            println!("Resolving JSON file reference");
             // Format referenced.json#/definitions/ExternalType
             let path_split_from_rest: Vec<&str> = s.split('#').collect::<Vec<&str>>();
             let (ref_path, maybe_inner_lookup) = {
                 let path_str = path_split_from_rest[0];
                 let ref_file = PathBuf::from(path_str);
-                let ref_path = self
-                    .to_canonical_path(&ref_file)
-                    .expect(format!("Could not resolve path [{:#?}] current_ dir [{:#?}]", ref_file, self.schema_directory).as_str());
+                let ref_path = self.to_canonical_path(&ref_file).expect(
+                    format!(
+                        "Could not resolve path [{:#?}] current_ dir [{:#?}]",
+                        ref_file, self.schema_directory
+                    )
+                    .as_str(),
+                );
                 (
                     ref_path,
                     path_split_from_rest
@@ -546,11 +404,10 @@ impl<'r> Expander<'r> {
                 return resolved_schema;
             }
         } else {
-            println!("NOT resolving JSON file reference");
             (Rc::clone(&self.root), s)
         };
 
-        let r = ref_lookup.split('/').fold(schema, |schema, comp: &str| {
+        ref_lookup.split('/').fold(schema, |schema, comp: &str| {
             if comp == "#" {
                 Rc::clone(&self.root)
             } else if comp == "definitions" {
@@ -563,9 +420,7 @@ impl<'r> Expander<'r> {
                         .unwrap_or_else(|| panic!("Expected definition: `{}` {}", s, comp)),
                 )
             }
-        });
-        println!("Finished schema_ref resolution for s:[{}], r:[{:#?}], current dir :[{:#?}]", s, r, self.schema_directory);
-        r
+        })
     }
 
     fn expand_type(&mut self, type_name: &str, required: bool, typ: Rc<Schema>) -> FieldType {
@@ -628,18 +483,18 @@ impl<'r> Expander<'r> {
                 SimpleTypes::Number => "f64".into(),
                 // Handle objects defined inline
                 SimpleTypes::Object
-                if !typ.properties.is_empty()
-                    || typ.additional_properties == Some(Value::Bool(false)) =>
-                    {
-                        let name = format!(
-                            "{}{}",
-                            self.current_type.to_pascal_case(),
-                            self.current_field.to_pascal_case()
-                        );
-                        let (_, tokens) = self.expand_schema(&name, typ);
-                        self.insert_type(name.clone(), tokens);
-                        name.into()
-                    }
+                    if !typ.properties.is_empty()
+                        || typ.additional_properties == Some(Value::Bool(false)) =>
+                {
+                    let name = format!(
+                        "{}{}",
+                        self.current_type.to_pascal_case(),
+                        self.current_field.to_pascal_case()
+                    );
+                    let (_, tokens) = self.expand_schema(&name, typ);
+                    self.insert_type(name.clone(), tokens);
+                    name.into()
+                }
                 SimpleTypes::Object => {
                     let prop = match typ.additional_properties {
                         Some(ref props) if props.is_object() => {
@@ -678,7 +533,6 @@ impl<'r> Expander<'r> {
         r
     }
 
-
     fn expand_definitions(&mut self, schema: Rc<Schema>) -> Rc<Schema> {
         let mut cloned_schema = (*schema).clone();
         for (name, def) in &mut cloned_schema.definitions {
@@ -699,7 +553,11 @@ impl<'r> Expander<'r> {
         Rc::new(cloned_schema)
     }
 
-    fn expand_schema(&mut self, original_name: &str, schema: Rc<Schema>) -> (Rc<Schema>, TokenStream) {
+    fn expand_schema(
+        &mut self,
+        original_name: &str,
+        schema: Rc<Schema>,
+    ) -> (Rc<Schema>, TokenStream) {
         let schema = self.expand_definitions(Rc::clone(&schema));
 
         let pascal_case_name = replace_invalid_identifier_chars(&original_name.to_pascal_case());
@@ -789,9 +647,12 @@ impl<'r> Expander<'r> {
                 .typ
                 .parse::<TokenStream>()
                 .unwrap();
-            return (schema, quote! {
-                pub type #name = #typ;
-            });
+            return (
+                schema,
+                quote! {
+                    pub type #name = #typ;
+                },
+            );
         };
 
         if name == original_name {
@@ -806,8 +667,7 @@ impl<'r> Expander<'r> {
     }
 
     fn expand_file_schema_ref(&mut self, canonical_file_path: &Path) -> Rc<Schema> {
-        println!("Expanding file_schema_ref {:#?}", canonical_file_path);
-        let r = if let Some(existing) = self.resolved_schemas.get(canonical_file_path) {
+        if let Some(existing) = self.resolved_schemas.get(canonical_file_path) {
             return Rc::clone(existing);
         } else {
             // Resolve the referenced file Schema.
@@ -842,7 +702,7 @@ impl<'r> Expander<'r> {
                 }
             }
             for (resolved_schema_path, resolved_schema) in
-            reffed_file_expander.resolved_schemas.into_iter()
+                reffed_file_expander.resolved_schemas.into_iter()
             {
                 self.resolved_schemas
                     .insert(resolved_schema_path, resolved_schema);
@@ -854,11 +714,8 @@ impl<'r> Expander<'r> {
                     .insert(canonical_file_path.to_owned(), Rc::clone(&expanded_schema));
             }
 
-
             expanded_schema
-        };
-        println!("Done expanding file schema_ref canonical_file_path:[{:#?}] schema_dir:[{:#?}] schema:[{:#?}] ", canonical_file_path, self.schema_directory, r);
-        r
+        }
     }
 
     fn to_canonical_path(&self, s: &Path) -> Option<PathBuf> {
@@ -897,9 +754,12 @@ impl<'r> Expander<'r> {
 
         let types = self.types.iter().map(|t| t.1);
 
-        (expanded_schema, quote! {
-            #( #types )*
-        })
+        (
+            expanded_schema,
+            quote! {
+                #( #types )*
+            },
+        )
     }
 
     pub fn expand_root(&mut self) -> (Rc<Schema>, TokenStream) {
