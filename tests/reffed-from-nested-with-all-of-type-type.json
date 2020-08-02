@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "nested-reffed-as-all-of-type-type",
+  "type": "object",
+  "required": [
+    "wut-prop"
+  ],
+  "properties": {
+    "wut-prop": {
+      "type": "integer"
+    }
+  }
+}

@@ -8,6 +8,9 @@
   "properties": {
     "foo-bar-bar-bar-prop": {
       "type": "boolean"
+    },
+    "some-random-ref": {
+      "$ref": "./reffed-from-nested-with-all-of-type-type.json"
     }
   }
 }

@@ -124,6 +124,7 @@ fn nested_reffing_with_all_of_type() {
         let _: String = os.foo_bar_bar_prop;
         // reffed through properties
         let _: bool = os.reffed_prop_in_all_of.foo_bar_bar_bar_prop;
+        let _: Option<NestedReffingWithAllOfType1ReffedPropInAllOfSomeRandomRef> = os.reffed_prop_in_all_of.some_random_ref;
     }
     let os2: Option<NestedReffingWithAllOfType2> = None;
     if let Some(os) = os2 {
