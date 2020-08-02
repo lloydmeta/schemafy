@@ -776,7 +776,7 @@ impl<'r> Expander<'r> {
             let new_def = format!("{}", type_def);
             let existing_def = format!("{}", existing);
             if new_def != existing_def {
-                panic!(
+                println!(
                     "Double declaration for type [{}]. First [{}] Second [{}]",
                     name, existing_def, new_def
                 );
