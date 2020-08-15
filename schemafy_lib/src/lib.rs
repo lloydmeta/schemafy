@@ -133,9 +133,9 @@ fn field(s: &str) -> TokenStream {
 }
 
 fn merge_option<T, F>(mut result: &mut Option<T>, r: &Option<T>, f: F)
-where
-    F: FnOnce(&mut T, &T),
-    T: Clone,
+    where
+        F: FnOnce(&mut T, &T),
+        T: Clone,
 {
     *result = match (&mut result, r) {
         (&mut &mut Some(ref mut result), &Some(ref r)) => return f(result, r),
@@ -226,7 +226,9 @@ impl<'a, 'r> FieldExpander<'a, 'r> {
         type_name: &str,
         schema: Rc<Schema>,
     ) -> (Rc<Schema>, Vec<TokenStream>) {
+        println!("Inside expand fields, about to expand schema for [{}]", type_name);
         let schema_rc = self.expander.schema(schema);
+        println!("Inside expand fields, done expanding schema for [{}]", type_name);
         let mut schema = (*schema_rc).clone();
         let tokens = schema
             .properties
@@ -252,9 +254,9 @@ impl<'a, 'r> FieldExpander<'a, 'r> {
                 let field_type = self
                     .expander
                     .expand_type(type_name, required, Rc::clone(value));
-                if let Some(expanded) = maybe_expanded {
-                    *value = expanded;
-                }
+                // if let Some(expanded) = maybe_expanded {
+                //     *value = expanded;
+                // }
 
                 if !field_type.typ.starts_with("Option<") {
                     self.default = false;
@@ -312,8 +314,8 @@ struct FieldType {
 }
 
 impl<S> From<S> for FieldType
-where
-    S: Into<String>,
+    where
+        S: Into<String>,
 {
     fn from(s: S) -> FieldType {
         FieldType {
@@ -389,14 +391,16 @@ impl<'r> Expander<'r> {
             let path_split_from_rest: Vec<&str> = s.split('#').collect::<Vec<&str>>();
             let (ref_path, maybe_inner_lookup) = {
                 let path_str = path_split_from_rest[0];
+                println!("resolving [{}]", path_str);
                 let ref_file = PathBuf::from(path_str);
                 let ref_path = self.to_canonical_path(&ref_file).expect(
                     format!(
                         "Could not resolve path [{:#?}] current_ dir [{:#?}]",
                         ref_file, self.schema_directory
                     )
-                    .as_str(),
+                        .as_str(),
                 );
+                println!("Successfully resolved [{}] to [{:#?}]", path_str, ref_path);
                 (
                     ref_path,
                     path_split_from_rest
@@ -490,18 +494,18 @@ impl<'r> Expander<'r> {
                 SimpleTypes::Number => "f64".into(),
                 // Handle objects defined inline
                 SimpleTypes::Object
-                    if !typ.properties.is_empty()
-                        || typ.additional_properties == Some(Value::Bool(false)) =>
-                {
-                    let name = format!(
-                        "{}{}",
-                        self.current_type.to_pascal_case(),
-                        self.current_field.to_pascal_case()
-                    );
-                    let (_, tokens) = self.expand_schema(&name, typ);
-                    self.insert_type(name.clone(), tokens);
-                    name.into()
-                }
+                if !typ.properties.is_empty()
+                    || typ.additional_properties == Some(Value::Bool(false)) =>
+                    {
+                        let name = format!(
+                            "{}{}",
+                            self.current_type.to_pascal_case(),
+                            self.current_field.to_pascal_case()
+                        );
+                        let (_, tokens) = self.expand_schema(&name, typ);
+                        self.insert_type(name.clone(), tokens);
+                        name.into()
+                    }
                 SimpleTypes::Object => {
                     let prop = match typ.additional_properties {
                         Some(ref props) if props.is_object() => {
@@ -565,16 +569,20 @@ impl<'r> Expander<'r> {
         original_name: &str,
         schema: Rc<Schema>,
     ) -> (Rc<Schema>, TokenStream) {
+        println!("Expanding definitions for [{}]", original_name);
         let schema = self.expand_definitions(Rc::clone(&schema));
-
+        println!("Finished expanding definitions for [{}]", original_name);
         let pascal_case_name = replace_invalid_identifier_chars(&original_name.to_pascal_case());
+        println!("Pascal name of [{}] is [{}]", original_name, pascal_case_name);
         self.current_type.clone_from(&pascal_case_name);
         let (schema, fields, default) = {
             let mut field_expander = FieldExpander {
                 default: true,
                 expander: self,
             };
+            println!("Expanding fields for [{}]", pascal_case_name);
             let (schema, fields) = field_expander.expand_fields(original_name, Rc::clone(&schema));
+            println!("Done expanding fields for [{}]", pascal_case_name);
             (schema, fields, field_expander.default)
         };
 
@@ -709,7 +717,7 @@ impl<'r> Expander<'r> {
                 }
             }
             for (resolved_schema_path, resolved_schema) in
-                reffed_file_expander.resolved_schemas.into_iter()
+            reffed_file_expander.resolved_schemas.into_iter()
             {
                 self.resolved_schemas
                     .insert(resolved_schema_path, resolved_schema);
@@ -719,7 +727,9 @@ impl<'r> Expander<'r> {
                     .insert(canonical_file_path.to_owned(), Rc::clone(&expanded_schema));
             }
 
-            expanded_schema
+            let t = expanded_schema;
+            println!("Finished expanding ref [{:#?}]", canonical_file_path);
+            t
         }
     }
 

@@ -8,5 +8,5 @@ schemafy::schemafy!(
 
 #[test]
 fn elastic_apm_schema() {
-    let os1: Option<Transaction> = None;
+    let os1: Option<Span> = None;
 }

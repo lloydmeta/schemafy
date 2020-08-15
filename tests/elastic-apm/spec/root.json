@@ -4,8 +4,8 @@
   "description": "Links to all the other typings",
   "type": "object",
   "definitions": {
-    "transaction": {
-      "$ref": "transactions/transaction.json"
+    "span": {
+      "$ref": "spans/span.json"
     }
   }
 }
